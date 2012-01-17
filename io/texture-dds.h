@@ -68,25 +68,50 @@ typedef struct {
 
 bool TextureInit();
 void TextureCleanup();
+bool TextureDownMip(int w, int h, LPDIRECT3DTEXTURE9 *tex);
 bool TextureConvert(D3DSURFACE_DESC &info, LPDIRECT3DTEXTURE9 *tex, bool black);
 
+bool TextureQuantizeR5G5B5V1(LPDIRECT3DTEXTURE9 *base, int minlevel, bool gamma);
+bool TextureQuantizeR5G5B5A1(LPDIRECT3DTEXTURE9 *base, int minlevel, bool gamma);
+bool TextureQuantizeR5G5B5H1(LPDIRECT3DTEXTURE9 *base, int minlevel, bool gamma);
+bool TextureQuantizeR4G4B4V4(LPDIRECT3DTEXTURE9 *base, int minlevel, bool gamma);
+bool TextureQuantizeR4G4B4A4(LPDIRECT3DTEXTURE9 *base, int minlevel, bool gamma);
+bool TextureQuantizeR4G4B4H4(LPDIRECT3DTEXTURE9 *base, int minlevel, bool gamma);
+bool TextureQuantizeR5G6B5(LPDIRECT3DTEXTURE9 *base, int minlevel, bool gamma);
+bool TextureQuantizeL4A4(LPDIRECT3DTEXTURE9 *base, int minlevel, bool gamma);
+bool TextureQuantizeL4H4(LPDIRECT3DTEXTURE9 *base, int minlevel, bool gamma);
+bool TextureConvertL4H4(LPDIRECT3DTEXTURE9 *base, int minlevel, bool gamma);
+bool TextureQuantizeX4Y4Z4V4(LPDIRECT3DTEXTURE9 *norm, int minlevel);
+bool TextureQuantize_X4Y4Z4V4(LPDIRECT3DTEXTURE9 *norm, int minlevel);
+bool TextureQuantizeX4Y4Z4D4(LPDIRECT3DTEXTURE9 *norm, int minlevel);
+bool TextureQuantize_X4Y4Z4D4(LPDIRECT3DTEXTURE9 *norm, int minlevel);
+bool TextureQuantizeX5Y6Z5(LPDIRECT3DTEXTURE9 *norm, int minlevel);
+bool TextureQuantizeX5Z6Y5(LPDIRECT3DTEXTURE9 *norm, int minlevel);
+bool TextureQuantize_X5Y6Z5(LPDIRECT3DTEXTURE9 *norm, int minlevel);
+
+bool TextureConvertRGBV(LPDIRECT3DTEXTURE9 *base, int minlevel, bool gamma);
 bool TextureConvertRGBA(LPDIRECT3DTEXTURE9 *base, int minlevel, bool gamma);
 bool TextureConvertRGBH(LPDIRECT3DTEXTURE9 *base, int minlevel, bool gamma);
 bool TextureConvertRGB(LPDIRECT3DTEXTURE9 *base, int minlevel, bool gamma);
+bool TextureConvertLA(LPDIRECT3DTEXTURE9 *base, int minlevel, bool gamma);
+bool TextureConvertLH(LPDIRECT3DTEXTURE9 *base, int minlevel, bool gamma);
+bool TextureConvertL(LPDIRECT3DTEXTURE9 *lumi, int minlevel, bool gamma);
 bool TextureConvertA(LPDIRECT3DTEXTURE9 *alpha, int minlevel);
+bool TextureConvertXYZV(LPDIRECT3DTEXTURE9 *norm, int minlevel);
+bool TextureConvert_XYZV(LPDIRECT3DTEXTURE9 *norm, int minlevel);
 bool TextureConvertXYZD(LPDIRECT3DTEXTURE9 *norm, int minlevel);
 bool TextureConvert_XYZD(LPDIRECT3DTEXTURE9 *norm, int minlevel);
 bool TextureConvertXY_Z(LPDIRECT3DTEXTURE9 *norm, LPDIRECT3DTEXTURE9 *z, int minlevel);
 bool TextureConvertXYZ(LPDIRECT3DTEXTURE9 *norm, int minlevel);
 bool TextureConvert_XYZ(LPDIRECT3DTEXTURE9 *norm, int minlevel);
 bool TextureConvertXY(LPDIRECT3DTEXTURE9 *norm, int minlevel);
-bool TextureConvertLA(LPDIRECT3DTEXTURE9 *base, int minlevel);
-bool TextureConvertA(LPDIRECT3DTEXTURE9 *alpha, int minlevel);
-bool TextureConvertL(LPDIRECT3DTEXTURE9 *lumi, int minlevel);
 
 bool TextureCompressRGBA(LPDIRECT3DTEXTURE9 *base, int minlevel, bool gamma);
 bool TextureCompressRGBH(LPDIRECT3DTEXTURE9 *base, int minlevel, bool gamma);
 bool TextureCompressRGB(LPDIRECT3DTEXTURE9 *base, int minlevel, bool gamma);
+bool TextureCompressLA(LPDIRECT3DTEXTURE9 *base, int minlevel, bool gamma);
+bool TextureCompressLH(LPDIRECT3DTEXTURE9 *base, int minlevel, bool gamma);
+bool TextureCompressL(LPDIRECT3DTEXTURE9 *base, int minlevel, bool gamma);
 bool TextureCompressA(LPDIRECT3DTEXTURE9 *alpha, int minlevel);
 bool TextureCompressXYZD(LPDIRECT3DTEXTURE9 *norm, int minlevel);
 bool TextureCompress_XYZD(LPDIRECT3DTEXTURE9 *norm, int minlevel);
@@ -94,8 +119,8 @@ bool TextureCompressXY_Z(LPDIRECT3DTEXTURE9 *norm, LPDIRECT3DTEXTURE9 *z, int mi
 bool TextureCompressXYZ(LPDIRECT3DTEXTURE9 *norm, int minlevel);
 bool TextureCompress_XYZ(LPDIRECT3DTEXTURE9 *norm, int minlevel);
 bool TextureCompressXY(LPDIRECT3DTEXTURE9 *norm, int minlevel);
-bool TextureCompressPM(LPDIRECT3DTEXTURE9 *base, LPDIRECT3DTEXTURE9 *norm, int minlevel, bool gamma);
 
+bool TextureCompressPM(LPDIRECT3DTEXTURE9 *base, LPDIRECT3DTEXTURE9 *norm, int minlevel, bool gamma);
 bool TextureCompressQDM(LPDIRECT3DTEXTURE9 *base, LPDIRECT3DTEXTURE9 *norm, int minlevel, bool gamma, bool LODed);
 
 const char *findFormat(D3DFORMAT fmt);

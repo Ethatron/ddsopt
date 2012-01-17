@@ -740,11 +740,11 @@ public:
 	SetTopic("Consolidating BSA-fragments:");
 	SetReport("Efficiency: %s to %s bytes (%d duplicates)", 
 	  processedinbytes, 
-	  processedinbytes - compresseddtbytes - virtualbsabytes, 0
+	  processedinbytes - compresseddtbytes - virtualbsabytes - (convertedinbytes - convertedoubytes), 0
 	);
 	SetProgress(
 	  processedinbytes,
-	  processedinbytes - compresseddtbytes - virtualbsabytes
+	  processedinbytes - compresseddtbytes - virtualbsabytes - (convertedinbytes - convertedoubytes)
 	);
 
 	/* walk (for transfer contents) */
@@ -936,11 +936,11 @@ public:
 		assert(fname <= fend);
 		SetReport("Efficiency: %s to %s bytes (%d duplicates)", 
 		  processedinbytes, 
-		  processedinbytes - compresseddtbytes - virtualbsabytes, (int)duplicates.size()
+		  processedinbytes - compresseddtbytes - virtualbsabytes - (convertedinbytes - convertedoubytes), (int)duplicates.size()
 		);
 		SetProgress(
 		  processedinbytes,
-		  processedinbytes - compresseddtbytes - virtualbsabytes
+		  processedinbytes - compresseddtbytes - virtualbsabytes - (convertedinbytes - convertedoubytes)
 		);
 	      }
 	    }

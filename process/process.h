@@ -29,6 +29,9 @@
  * version of this file under either the MPL or the LGPL License."
  */
 
+#ifndef PROCESS_H
+#define PROCESS_H
+
 #include <string>
 #include <vector>
 #include <map>
@@ -58,11 +61,32 @@ extern int virtualbsabytes;
 
 /* ---------------------------------------------------------------------------------------------- */
 
+#include <d3d9.h>
+#include <d3dx9.h>
+
+extern bool omsn, bmsn, cmsn; extern D3DFORMAT fmsn;
+extern bool on,   bn,   cn;   extern D3DFORMAT fn;
+extern bool ons,  bns,  cns;  extern D3DFORMAT fns;
+extern bool oc,   bc,   cc;   extern D3DFORMAT fc;
+extern bool oca,  bca,  cca;  extern D3DFORMAT fca;
+extern bool og,   bg,   cg;   extern D3DFORMAT fg;
+extern bool oga,  bga,  cga;  extern D3DFORMAT fga;
+
+extern int lpw, lph;
+extern int lcw, lch;
+extern int lls;
+extern int llc;
+extern int llo;
+
+/* ---------------------------------------------------------------------------------------------- */
+
 extern bool compressimages;
 extern bool leavehdrtexts;
 extern bool normalmapts;
 extern bool colormapgamma;
+extern bool colormapalpha;
 extern int normalsteepness;
+extern int ignoreborder;
 
 extern int fixedtexts;
 extern int modifiedtexts;
@@ -71,3 +95,20 @@ extern int changedformats;
 
 const char *UsedforDDS(const char *path, int ch);
 bool ProcessDDS(const char *inname, const char *ouname, const char *rep);
+
+/* ---------------------------------------------------------------------------------------------- */
+
+#define WL_NORMALT	(1UL << 0)  // consider it's a tangent-space normal
+#define WL_NORMALM	(1UL << 1)  // consider it's a model-space normal
+#define WL_COLOR	(1UL << 2)  // consider it's a color-map
+#define WL_GREY		(1UL << 3)  // consider it's a greyscale-map
+#define WL_TRANSP	(1UL << 4)  // consider alpha is transparency
+#define WL_CUSTOM	(1UL << 5)  // consider alpha is not alpha
+#define WL_COMPRESS	(1UL << 6)  // compress to DXT
+#define WL_BITFIELD	(1UL << 7)  // compress to 565/4444 etc.
+#define WL_LEAVE	(1UL << 8)  // compress to 565/4444 etc.
+
+void WhitelistDDS(const char *ini = NULL);
+unsigned int WhitelistedDDS(const char *inname);
+
+#endif

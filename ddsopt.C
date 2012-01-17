@@ -228,13 +228,11 @@ extern "C" int WINAPI WinMain(HINSTANCE hInstance,
     if ((argc > 1) && parseCommandline(argc, &argv[0]))
       ret = main(argc, &argv[0]);
     else {
-      ioinit();
-      TextureInit();
+      ioinit(); if (TextureInit()) {
 
       ret = wxEntry(hInstance, hPrevInstance, lpCmdLine, nCmdShow);
 
-      TextureCleanup();
-      ioexit();
+      TextureCleanup(); } ioexit();
     }
 
     free(cmdLine);

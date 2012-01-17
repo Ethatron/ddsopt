@@ -318,49 +318,86 @@
       iactives =
       oactives = 0;
 
+      ddirectory.clear();
       fdirectory.clear();
     }
     else if (io == 1) {
       iactives = 0;
 
-      iomap newmap;
-      iomap::iterator walk = fdirectory.begin();
-      while (walk != fdirectory.end()) {
-	if (walk->second.oex) {
-	  ioio *m = &newmap[walk->first];
+      {
+	iomap newmap;
+	iomap::iterator walk = fdirectory.begin();
+	while (walk != fdirectory.end()) {
+	  if (walk->second.oex) {
+	    ioio *m = &newmap[walk->first];
 
-	  m->skip     = walk->second.skip;
-	  m->selected = walk->second.selected;
+	    m->skip     = walk->second.skip;
+	    m->selected = walk->second.selected;
 
-	  m->oex = walk->second.oex;
-	  m->ou  = walk->second.ou;
+	    m->oex = walk->second.oex;
+	    m->ou  = walk->second.ou;
+	  }
+
+	  walk++;
 	}
 
-	walk++;
+	fdirectory = newmap;
       }
 
-      fdirectory = newmap;
+      {
+	stmap newmap;
+	stmap::iterator walk = ddirectory.begin();
+	while (walk != ddirectory.end()) {
+	  if (walk->second.omsk & OEX) {
+	    iost *m = &newmap[walk->first];
+
+	    m->omsk = walk->second.omsk;
+	  }
+
+	  walk++;
+	}
+
+	ddirectory = newmap;
+      }
     }
     else if (io == 2) {
       oactives = 0;
 
-      iomap newmap;
-      iomap::iterator walk = fdirectory.begin();
-      while (walk != fdirectory.end()) {
-	if (walk->second.iex) {
-	  ioio *m = &newmap[walk->first];
+      {
+	iomap newmap;
+	iomap::iterator walk = fdirectory.begin();
+	while (walk != fdirectory.end()) {
+	  if (walk->second.iex) {
+	    ioio *m = &newmap[walk->first];
 
-	  m->skip     = walk->second.skip;
-	  m->selected = walk->second.selected;
+	    m->skip     = walk->second.skip;
+	    m->selected = walk->second.selected;
 
-	  m->iex = walk->second.iex;
-	  m->in  = walk->second.in;
+	    m->iex = walk->second.iex;
+	    m->in  = walk->second.in;
+	  }
+
+	  walk++;
 	}
 
-	walk++;
+	fdirectory = newmap;
       }
 
-      fdirectory = newmap;
+      {
+	stmap newmap;
+	stmap::iterator walk = ddirectory.begin();
+	while (walk != ddirectory.end()) {
+	  if (walk->second.imsk & IEX) {
+	    iost *m = &newmap[walk->first];
+
+	    m->imsk = walk->second.imsk;
+	  }
+
+	  walk++;
+	}
+
+	ddirectory = newmap;
+      }
     }
 
     DOArchiveList->Clear();
@@ -573,23 +610,50 @@
     f->second.selected = selected;
   }
 
+  void DDSoptGUI::ActivateTreeItem(wxTreeEvent& event) {
+    wxTreeItemId item = event.GetItem();
+    ioTreeItemData *iod = (ioTreeItemData *)DOArchiveTree->GetItemData(item);
+
+    if (iod) {
+      wxString ph = IPath;
+      ph.Append(iod->fullpath);
+
+      DOInText->SetValue(ph);
+      BrowseIn(ph);
+    }
+  }
+
   /* ---------------------------------------------------------------------------- */
-  void DDSoptGUI::TypedIn(wxCommandEvent& event) {
+  void DDSoptGUI::TypedIn(wxCommandEvent& event) { return;
     wxString ph = event.GetString();
 //  DOInText->SetValue(ph);
 
     if (ph.IsNull())
       return;
-
     /* does it exist? */
-    if (GetFileAttributes(ph.data()) == INVALID_FILE_ATTRIBUTES)
+    if (iosize(ph.data()) == -1)
       return;
 
-    BrowseIn(ph);
+    if (stricmp(IPath, ph.data()))
+      BrowseIn(ph);
+  }
+
+  void DDSoptGUI::TypedInDone(wxFocusEvent& event) {
+    wxString ph = DOInText->GetValue();
+
+    if (ph.IsNull())
+      return;
+    /* does it exist? */
+    if (iosize(ph.data()) == -1)
+      return;
+
+    if (stricmp(IPath, ph.data()))
+      BrowseIn(ph);
   }
 
   void DDSoptGUI::BrowseIn(wxCommandEvent& event) {
-    HRESULT hr = AskInput();
+    wxBusyCursor wait;
+    HRESULT hr = AskInput(IPath);
     if (!SUCCEEDED(hr))
       return;
 
@@ -620,24 +684,38 @@
   }
 
   /* ---------------------------------------------------------------------------- */
-  void DDSoptGUI::TypedOut(wxCommandEvent& event) {
+  void DDSoptGUI::TypedOut(wxCommandEvent& event) { return;
     wxString ph = event.GetString();
-//  DOOutText->SetValue(ph);
+    //  DOOutText->SetValue(ph);
 
     if (ph.IsNull())
       return;
 
-    BrowseOut(ph);
+    if (stricmp(OPath, ph.data()))
+      BrowseOut(ph);
+  }
+
+  void DDSoptGUI::TypedOutDone(wxFocusEvent& event) {
+    wxString ph = DOOutText->GetValue();
+    DOOutCText->SetValue(ph);
+
+    if (ph.IsNull())
+      return;
+
+    if (stricmp(OPath, ph.data()))
+      BrowseOut(ph);
   }
 
   void DDSoptGUI::BrowseOut(wxCommandEvent& event) {
+    wxBusyCursor wait;
     SetOutput(DOInText->GetValue().data());
-    HRESULT hr = AskOutput();
+    HRESULT hr = AskOutput(OPath);
     if (!SUCCEEDED(hr))
       return;
 
     wxString ph = selected_string;
     DOOutText->SetValue(ph);
+    DOOutCText->SetValue(ph);
 
     if (!ph.IsNull()) {
     }
@@ -645,8 +723,28 @@
     BrowseOut(ph);
   }
 
+  void DDSoptGUI::TypedOutC(wxCommandEvent& event) {
+    TypedOut(event);
+  }
+
+  void DDSoptGUI::TypedOutCDone(wxFocusEvent& event) {
+    wxString ph = DOOutCText->GetValue();
+    DOOutText->SetValue(ph);
+
+    if (ph.IsNull())
+      return;
+
+    if (stricmp(OPath, ph.data()))
+      BrowseOut(ph);
+  }
+
+  void DDSoptGUI::BrowseOutC(wxCommandEvent& event) {
+    BrowseOut(event);
+  }
+
   void DDSoptGUI::BrowseOut(wxString ph) {
     DOProcess->Enable(FALSE);
+    DOProcessC->Enable(FALSE);
 
     strcpy(OPath, ph.data());
 
@@ -657,10 +755,9 @@
 
     if (ph.IsNull())
       return;
-
-    /* does it exist? */
-    if (GetFileAttributes(ph.data()) == INVALID_FILE_ATTRIBUTES)
-      return;
+    /* does it exist?
+    if (iosize(ph.data()) == -1)
+      return; */
 
     DirectoryFromFiles(2);
     ResetHButtons();
@@ -915,6 +1012,9 @@
 	    while (1) {
 	      try {
 		iocp(inname, ouname);
+
+		/* uh, MicroSoft, no signed "ssize_t"? */
+		processedinbytes += iinfo.io_size;
 	      }
 	      catch(exception &e) {
 		if (strcmp(e.what(), "ExitThread")) {
@@ -949,14 +1049,13 @@
         }
 
 	/* progress */
-	processedinbytes += iinfo.io_size;
 	prog->SetReport("Efficiency: %s to %s bytes",
 	  processedinbytes,
-	  processedinbytes - compresseddtbytes - virtualbsabytes
+	  processedinbytes - compresseddtbytes - virtualbsabytes - (convertedinbytes - convertedoubytes)
 	);
 	prog->SetProgress(
 	  processedinbytes,
-	  processedinbytes - compresseddtbytes - virtualbsabytes
+	  processedinbytes - compresseddtbytes - virtualbsabytes - (convertedinbytes - convertedoubytes)
 	);
 
 	if (dealloc) {
@@ -968,13 +1067,82 @@
   }
 
   void DDSoptGUI::ProcessingStart() {
+    skipprocessing = DOIgnore->FindChildItem(wxID_SKIPP, NULL)->IsChecked();
+    passthrough    = DOIgnore->FindChildItem(wxID_PASST, NULL)->IsChecked();
+
     skipexisting  = DOSettings->FindChildItem(wxID_SKIPE, NULL)->IsChecked();
     skipnewer     = DOSettings->FindChildItem(wxID_SKIPN, NULL)->IsChecked();
     skiphashcheck = DOSettings->FindChildItem(wxID_SKIPC, NULL)->IsChecked();
     skipbroken    = DOSettings->FindChildItem(wxID_SKIPB, NULL)->IsChecked();
     processhidden = DOSettings->FindChildItem(wxID_SKIPH, NULL)->IsChecked();
     dropextras    = DOSettings->FindChildItem(wxID_SKIPX, NULL)->IsChecked();
-    verbose = false;
+    verbose = true;
+
+    bmsn = false; omsn = cmsn = DOCompressMSN->GetValue();
+    bn   = false; on   = cn   = DOCompressN->GetValue();
+    bns  = false; ons  = cns  = DOCompressNS->GetValue();
+    bc   = false; oc   = cc   = DOCompressC->GetValue();
+    bca  = false; oca  = cca  = DOCompressCA->GetValue();
+    bg   = false; og   = cg   = DOCompressG->GetValue();
+    bga  = false; oga  = cga  = DOCompressGA->GetValue();
+
+    switch(DOCompressMSNFormat->GetSelection()) {
+      case  0: fmsn = D3DFMT_R8G8B8; cmsn = false; break;
+      case  1: fmsn = D3DFMT_R5G6B5; bmsn = true; break;
+      default: fmsn = D3DFMT_UNKNOWN; break; }
+    switch(DOCompressNFormat->GetSelection()) {
+      case  0: fn = D3DFMT_R8G8B8; cn = false; break;
+      case  1: fn = D3DFMT_R5G6B5; bn = true; break;
+      default: fn = D3DFMT_UNKNOWN; break; }
+    switch(DOCompressNSFormat->GetSelection()) {
+      case  0: fns = D3DFMT_A8R8G8B8; cns = false; break;
+      case  1: fns = D3DFMT_A4R4G4B4; bns = true; break;
+      default: fns = D3DFMT_UNKNOWN; break; }
+    switch(DOCompressCFormat->GetSelection()) {
+      case  0: fc = D3DFMT_R8G8B8; cc = false; break;
+      case  1: fc = D3DFMT_R5G6B5; bc = true; break;
+      default: fc = D3DFMT_UNKNOWN; break; }
+    switch(DOCompressCAFormat->GetSelection()) {
+      case  0: fca = D3DFMT_A8R8G8B8; cca = false; break;
+      case  1: fca = D3DFMT_A4R4G4B4; bca = true; break;
+      default: fca = D3DFMT_UNKNOWN; break; }
+    switch(DOCompressGFormat->GetSelection()) {
+      case  0: fg = D3DFMT_L8; cg = false; break;
+      default: fg = D3DFMT_UNKNOWN; break; }
+    switch(DOCompressGAFormat->GetSelection()) {
+      case  0: fga = D3DFMT_A8L8; cga = false; break;
+      case  1: fga = D3DFMT_A4L4; bga = true; break;
+      default: fga = D3DFMT_UNKNOWN; break; }
+
+    int pdn = DOLimitResPlain->GetSelection(); lpw = 8192, lph = 8192;
+    if (pdn >= 17)
+      lpw = lph = -(pdn - 17);
+    else
+      while (pdn-- > 0) {
+	lph >>= 1;
+	if (pdn-- > 0) {
+	  lpw >>= 1;
+	}}
+
+    int cdn = DOLimitResCompressed->GetSelection(); lcw = 8192, lch = 8192;
+    if (pdn >= 17)
+      lcw = lch = -(cdn - 17);
+    else
+      while (cdn-- > 0) {
+	lch >>= 1;
+	if (cdn-- > 0) {
+	  lcw >>= 1;
+	}}
+
+    static const int szs[] = {
+      32*1024, 24*1024, 20*1024, 16*1024, 12*1024, 10*1024,
+      8*1024, 6*1024, 4*1024, 3*1024, 2*1024, 1.5*1024, 1.25*1024,
+      1*1024, 800, 700, 600, 500
+    };
+
+    lls = szs[DOLimitSzeLand ->GetSelection()];
+    llc = szs[DOLimitSzeChar ->GetSelection()];
+    llo = szs[DOLimitSzeOther->GetSelection()];
 
     gameversion = -1;
     /**/ if (DOGame->FindChildItem(wxID_OBLIVON, NULL)->IsChecked())
@@ -986,10 +1154,23 @@
 
     leavehdrtexts   = DOBTextures->FindChildItem(wxID_NHDR, NULL)->IsChecked();
     normalmapts     = DOBTextures->FindChildItem(wxID_NMTS, NULL)->IsChecked();
-    normalsteepness = DOBTextures->FindChildItem(wxID_NMSP, NULL)->IsChecked() ? 1 : 2;
+    normalsteepness = DOBTextures->FindChildItem(wxID_NMSP, NULL)->IsChecked() ? 2 : 1;
     colormapgamma   = DOBTextures->FindChildItem(wxID_CMGM, NULL)->IsChecked();
     compressimages  = DOBTextures->FindChildItem(wxID_DOCT, NULL)->IsChecked();
     optimizetexts   = DOBTextures->FindChildItem(wxID_DOOT, NULL)->IsChecked();
+    colormapalpha   =   DOGame->FindChildItem(wxID_SKYRIM , NULL)->IsChecked();
+
+    ignoreborder = 0;
+    /**/ if (DOBorderIgnore->FindChildItem(wxID_BRD0, NULL)->IsChecked())
+      ignoreborder = 0;
+    else if (DOBorderIgnore->FindChildItem(wxID_BRD1, NULL)->IsChecked())
+      ignoreborder = 1;
+    else if (DOBorderIgnore->FindChildItem(wxID_BRD2, NULL)->IsChecked())
+      ignoreborder = 2;
+    else if (DOBorderIgnore->FindChildItem(wxID_BRD4, NULL)->IsChecked())
+      ignoreborder = 4;
+    else if (DOBorderIgnore->FindChildItem(wxID_BRD8, NULL)->IsChecked())
+      ignoreborder = 8;
 
     srchbestbsa = false;
     thresholdbsa = true;
@@ -1033,8 +1214,19 @@
     compresseddtbytes = 0;
     compressedoubytes = 0;
 
+    convertedinbytes = 0;
+    convertedoubytes = 0;
+
     processedinbytes = 0;
     processedoubytes = 0;
+
+    modifiedtexts  = 0;
+    planartexts    = 0;
+    changedformats = 0;
+
+    brokenfiles    = 0;
+    fixedfiles     = 0;
+    processedfiles = 0;
 
     /* count again */
     iactives = 0;
@@ -1055,21 +1247,26 @@
     if (DOSettings->FindChildItem(wxID_LOGF, NULL)->IsChecked()) {
       wxString ph = DOOutText->GetValue();
       wxFileName log(ph); log.ClearExt(); log.SetExt("log");
-      logfile = fopen(log.GetFullPath().data(), "wb");
+      logfile = fopen(log.GetFullPath().data(), (skipexisting || skipnewer ? "ab" : "wb"));
     }
 
+    /* read the ini in */
+    WhitelistDDS();
+
     try {
+/*
       if (!skipprocessing) {
 	if ((TextureInit() != true))
 	  throw runtime_error("Failed to initialize DirectX!");
       }
-
+*/
       Process(DOInText->GetValue().data(), DOOutText->GetValue().data(), "");
-
+/*
       if (!skipprocessing) {
 	if (!skipprocessing)
 	  TextureCleanup();
       }
+*/
     }
     catch(exception &e) {
       if (strcmp(e.what(), "ExitThread")) {

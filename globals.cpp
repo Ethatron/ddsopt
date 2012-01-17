@@ -47,6 +47,7 @@ bool skiphashcheck = false;
 bool skipexisting = false;
 bool skipnewer = false;
 bool skipprocessing = false;
+bool skipoptimized = true;
 bool processhidden = false;
 bool passthrough = false;
 bool simulation = false;

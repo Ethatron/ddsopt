@@ -115,15 +115,15 @@ void errprintf(FILE *f, const char *format, ...) {
     sprintf(buf, format, ## __VA_ARGS__);		\
     len = strlen(buf);					\
     fll[(80 - 4) - len] = '\0';				\
-    fprintf(logfile, "\n%c %s %s\n", fill, buf, fll);	\
 							\
+    fprintf(logfile, "\n%c %s %s\n", fill, buf, fll);	\
     fflush(logfile);					\
   }							\
 }
 
-#define nfoprintf(f, format, ...) { if (!critical && logfile) { fprintf(logfile, format, ## __VA_ARGS__); } }
-#define errprintf(f, format, ...) { if (1         && logfile) { fprintf(logfile, format, ## __VA_ARGS__); } }
-#define     logrf(   format, ...) { if (0         && repfile) { fprintf(repfile, format, ## __VA_ARGS__); } }
+#define nfoprintf(f, format, ...) { if (!critical && logfile) { fprintf(logfile, format, ## __VA_ARGS__); fflush(logfile); } }
+#define errprintf(f, format, ...) { if (1         && logfile) { fprintf(logfile, format, ## __VA_ARGS__); fflush(logfile); } }
+#define     logrf(   format, ...) { if (0         && repfile) { fprintf(repfile, format, ## __VA_ARGS__); fflush(repfile); } }
 
 extern FILE *repfile;
 extern FILE *logfile;
@@ -157,6 +157,7 @@ extern bool skiphashcheck;
 extern bool skipexisting;
 extern bool skipnewer;
 extern bool skipprocessing;
+extern bool skipoptimized;
 extern bool processhidden;
 extern bool passthrough;
 extern bool simulation;

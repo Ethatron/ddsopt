@@ -42,8 +42,6 @@ template <class T> void SafeRelease(T **ppT) {
 const COMDLG_FILTERSPEC c_rgLoadTypes[] =
 {
     {L"Bethesda Softworks Archive (*.bsa)",	L"*.bsa"},
-    {L"NetImmerse File Format (*.nif)",		L"*.nif"},
-    {L"NetImmerse Key Frames (*.kf)",		L"*.kf"},
     {L"DirectDraw Surface (*.dds)",		L"*.dds"},
     {L"Portable Network Graphics (*.png)",	L"*.png"},
     {L"Targa Image File (*.tga)",		L"*.tga"},
@@ -52,11 +50,7 @@ const COMDLG_FILTERSPEC c_rgLoadTypes[] =
     {L"Portable Grey Map (*.pgm)",		L"*.pgm"},
     {L"Portable Float Map (*.pfm)",		L"*.pfm"},
     {L"Radiance HDR (*.hdr)",			L"*.hdr"},
-    {L"Wave File Format (*.wav)",		L"*.wav"},
-    {L"All Archives (*.bsa)",			L"*.bsa"},
-    {L"All Model Documents (*.nif, *.kf)",      L"*.nif;*.kf"},
     {L"All Image Documents (*.dds, *.png, *.tga, *.bmp, *.ppm, *.pgm, *.pfm, *.hdr)",         	L"*.dds;*.png;*.tga;*.bmp;*.ppm;*.pgm;*.pfm;*.hdr"},
-    {L"All Sound Documents (*.wav)",         	L"*.wav"},
     {L"All Documents (*)",         		L"*"},
 };
 
@@ -69,20 +63,15 @@ const DWORD c_idDone    = 602;
 
 // Indices of file types
 #define INDEX_BSA	1
-#define INDEX_NIF	2
-#define INDEX_KF	3
-#define INDEX_DDS	4
-#define INDEX_PNG	5
-#define INDEX_TGA	6
-#define INDEX_PPM	7
-#define INDEX_PGM	8
-#define INDEX_PFM	9
-#define INDEX_HDR	10
-#define INDEX_WAV	11
-#define INDEX_MODELS	12
-#define INDEX_IMAGES	13
-#define INDEX_SOUNDS	14
-#define INDEX_ALL	15
+#define INDEX_DDS	2
+#define INDEX_PNG	3
+#define INDEX_TGA	4
+#define INDEX_PPM	5
+#define INDEX_PGM	6
+#define INDEX_PFM	7
+#define INDEX_HDR	8
+#define INDEX_IMAGES	9
+#define INDEX_ALL	10
 
 // Controls
 #define CONTROL_GROUP           2000
@@ -299,7 +288,7 @@ HRESULT CDialogEventHandler::OnTypeChange(IFileDialog *pfd)
 
             switch (uIndex)
             {
-            case INDEX_NIF:
+            case INDEX_DDS:
                 // When .nif is selected, let's ask for some arbitrary property, say Title.
                 hr = PSGetPropertyDescriptionListFromString(L"prop:System.Title", IID_PPV_ARGS(&pdl));
                 if (SUCCEEDED(hr))
@@ -332,8 +321,77 @@ HRESULT CDialogEventHandler_CreateInstance(REFIID riid, void **ppv)
 
 /* DDSopt Snippets ***************************************************************************************************/
 
+#include <sys/stat.h>
+#include "../io/io.h"
+
+extern char *infile;
+extern char *outfile;
+
+void SetPresel(const char *presel, IFileDialog *pfd) {
+  LPCWSTR f = NULL;
+  const char *fname = "";
+  IShellItem *ditem = NULL; 
+  if (presel) {
+    if (PathIsDirectory(presel)) {
+      SHCreateItemFromParsingName(f = AnsiToUnicode((LPSTR)presel), NULL, IID_PPV_ARGS(&ditem));
+    }
+    else {
+      static char tmp[MAX_PATH]; strcpy(tmp, presel);
+      PTSTR ext = PathFindExtension(tmp);
+      PTSTR nam = PathFindFileName(tmp);
+      if (nam > tmp) {
+	nam[-1] = '\0';
+	fname = nam;
+
+	SHCreateItemFromParsingName(f = AnsiToUnicode((LPSTR)tmp), NULL, IID_PPV_ARGS(&ditem));
+      }
+      else
+	fname = tmp;
+    }
+  }
+
+  if (f)
+    delete[] f; f = NULL;
+  if (fname)
+    pfd->SetFileName(f = AnsiToUnicode((LPSTR)fname));
+  if (ditem)
+    pfd->SetFolder  (                         ditem );
+
+  if (f)
+    delete[] f; f = NULL;
+  if (ditem)
+    ditem->Release();
+}
+
+void SetOutput(const char *against) {
+  memset(c_rgSaveTypes, 0, sizeof(c_rgSaveTypes));
+
+  c_rgSaveTypes[0] = c_rgLoadTypes[0], c_rgSaveNums = 1, defidx = 1;
+  if (against) {
+    /* look what we'v got
+    char *infile, *outfile; */
+    struct stat sinfo; char ext[256], *extp;
+    stat(against, &sinfo);
+    extp = getext(ext, against);
+    infile = strdup(against);
+    defext = AnsiToUnicode(extp);
+
+    /**/ if (!stricmp("dds", extp)) c_rgSaveTypes[1] = c_rgLoadTypes[1], c_rgSaveNums++, defidx = 2;
+    else if (!stricmp("png", extp)) c_rgSaveTypes[1] = c_rgLoadTypes[1], c_rgSaveNums++, defidx = 2;
+    else if (!stricmp("tga", extp)) c_rgSaveTypes[1] = c_rgLoadTypes[1], c_rgSaveNums++, defidx = 2;
+    else if (!stricmp("bmp", extp)) c_rgSaveTypes[1] = c_rgLoadTypes[1], c_rgSaveNums++, defidx = 2;
+    else if (!stricmp("ppm", extp)) c_rgSaveTypes[1] = c_rgLoadTypes[1], c_rgSaveNums++, defidx = 2;
+    else if (!stricmp("pgm", extp)) c_rgSaveTypes[1] = c_rgLoadTypes[1], c_rgSaveNums++, defidx = 2;
+    else if (!stricmp("pfm", extp)) c_rgSaveTypes[1] = c_rgLoadTypes[1], c_rgSaveNums++, defidx = 2;
+    else if (!stricmp("hdr", extp)) c_rgSaveTypes[1] = c_rgLoadTypes[1], c_rgSaveNums++, defidx = 2;
+    else                            c_rgSaveTypes[1] = c_rgLoadTypes[10], c_rgSaveNums++, defidx = 2;
+  }
+}
+
+/* DDSopt Snippets ***************************************************************************************************/
+
 // This code snippet demonstrates how to work with the DDSopt interface
-HRESULT AskInput()
+HRESULT AskInput(const char *presel)
 {
   if (selected_string) {
     delete[] selected_string;
@@ -373,16 +431,18 @@ HRESULT AskInput()
 	      pfdc->Release();
 	    }
 
+	    SetPresel(presel, pfd);
+
 	    // Set the file types to display only. Notice that, this is a 1-based array.
 	    hr = pfd->SetFileTypes(ARRAYSIZE(c_rgLoadTypes), c_rgLoadTypes);
 	    if (SUCCEEDED(hr))
 	    {
 	      // Set the selected file type index to Word Docs for this example.
-	      hr = pfd->SetFileTypeIndex(INDEX_NIF);
+	      hr = pfd->SetFileTypeIndex(INDEX_DDS);
 	      if (SUCCEEDED(hr))
 	      {
 		// Set the default extension to be ".nif" file.
-		hr = pfd->SetDefaultExtension(L"nif");
+		hr = pfd->SetDefaultExtension(L"dds");
 		if (SUCCEEDED(hr))
 		{
 		  // Show the dialog
@@ -436,7 +496,7 @@ HRESULT AskInput()
 }
 
 // This code snippet demonstrates how to work with the DDSopt interface
-HRESULT AskOutput()
+HRESULT AskOutput(const char *presel)
 {
   if (selected_string) {
     delete[] selected_string;
@@ -476,12 +536,14 @@ HRESULT AskOutput()
 	      pfdc->Release();
 	    }
 
+	    SetPresel(presel, pfd);
+
 	    // Set the file types to display only. Notice that, this is a 1-based array.
 	    hr = pfd->SetFileTypes(c_rgSaveNums, c_rgSaveTypes);
 	    if (SUCCEEDED(hr))
 	    {
 	      // Set the selected file type index to Word Docs for this example.
-	      hr = pfd->SetFileTypeIndex(INDEX_NIF);
+	      hr = pfd->SetFileTypeIndex(defidx);
 	      if (SUCCEEDED(hr))
 	      {
 		// Set the default extension to be ".nif" file.
@@ -545,43 +607,11 @@ HRESULT AskOutput()
   return hr;
 }
 
-#include <sys/stat.h>
-#include "../io/io.h"
-
-extern char *infile;
-extern char *outfile;
-
-void SetOutput(const char *against) {
-  c_rgSaveTypes[0] = c_rgLoadTypes[0], c_rgSaveNums = 1, defidx = 1;
-  if (against) {
-    /* look what we'v got
-    char *infile, *outfile; */
-    struct stat sinfo; char ext[256], *extp;
-    stat(against, &sinfo);
-    extp = getext(ext, against);
-    infile = strdup(against);
-    defext = AnsiToUnicode(extp);
-
-    /**/ if (!stricmp("nif", extp)) c_rgSaveTypes[1] = c_rgLoadTypes[1], c_rgSaveNums++, defidx = 2;
-    else if (!stricmp("kf",  extp)) c_rgSaveTypes[1] = c_rgLoadTypes[2], c_rgSaveNums++, defidx = 2;
-    else if (!stricmp("dds", extp)) c_rgSaveTypes[1] = c_rgLoadTypes[3], c_rgSaveNums++, defidx = 2;
-    else if (!stricmp("png", extp)) c_rgSaveTypes[1] = c_rgLoadTypes[3], c_rgSaveNums++, defidx = 2;
-    else if (!stricmp("tga", extp)) c_rgSaveTypes[1] = c_rgLoadTypes[3], c_rgSaveNums++, defidx = 2;
-    else if (!stricmp("bmp", extp)) c_rgSaveTypes[1] = c_rgLoadTypes[3], c_rgSaveNums++, defidx = 2;
-    else if (!stricmp("ppm", extp)) c_rgSaveTypes[1] = c_rgLoadTypes[3], c_rgSaveNums++, defidx = 2;
-    else if (!stricmp("pgm", extp)) c_rgSaveTypes[1] = c_rgLoadTypes[3], c_rgSaveNums++, defidx = 2;
-    else if (!stricmp("pfm", extp)) c_rgSaveTypes[1] = c_rgLoadTypes[3], c_rgSaveNums++, defidx = 2;
-    else if (!stricmp("hdr", extp)) c_rgSaveTypes[1] = c_rgLoadTypes[3], c_rgSaveNums++, defidx = 2;
-    else if (!stricmp("wav", extp)) c_rgSaveTypes[1] = c_rgLoadTypes[11], c_rgSaveNums++, defidx = 2;
-    else                            c_rgSaveTypes[1] = c_rgLoadTypes[16], c_rgSaveNums++, defidx = 2;
-  }
-}
-
 /* DDSopt Snippets ***************************************************************************************************/
 
 #include "../globals.h"
 
-HRESULT parse_inifile(const char *ini, const char *section) {
+bool parse_inifile(const char *ini, const char *section) {
   optimizequick   = !!GetPrivateProfileInt(section, "optimizequick", optimizequick, ini);
   optimizetexts   = !!GetPrivateProfileInt(section, "optimizetexts", optimizetexts, ini);
   leavehdrtexts   = !!GetPrivateProfileInt(section, "leavehdrtexts", leavehdrtexts, ini);
@@ -623,7 +653,7 @@ HRESULT Deployment()
 {
   HRESULT hr;
 
-  hr = AskInput();
+  hr = AskInput(NULL);
   if (SUCCEEDED(hr)) {
     /* look what we'v got
     char *infile, *outfile; */
@@ -634,20 +664,17 @@ HRESULT Deployment()
     defext = AnsiToUnicode(extp);
 
 				    c_rgSaveTypes[0] = c_rgLoadTypes[0], c_rgSaveNums = 1, defidx = 1;
-    /**/ if (!stricmp("nif", extp)) c_rgSaveTypes[1] = c_rgLoadTypes[1], c_rgSaveNums++, defidx = 2;
-    else if (!stricmp("kf",  extp)) c_rgSaveTypes[1] = c_rgLoadTypes[2], c_rgSaveNums++, defidx = 2;
-    else if (!stricmp("dds", extp)) c_rgSaveTypes[1] = c_rgLoadTypes[3], c_rgSaveNums++, defidx = 2;
-    else if (!stricmp("png", extp)) c_rgSaveTypes[1] = c_rgLoadTypes[3], c_rgSaveNums++, defidx = 2;
-    else if (!stricmp("tga", extp)) c_rgSaveTypes[1] = c_rgLoadTypes[3], c_rgSaveNums++, defidx = 2;
-    else if (!stricmp("bmp", extp)) c_rgSaveTypes[1] = c_rgLoadTypes[3], c_rgSaveNums++, defidx = 2;
-    else if (!stricmp("ppm", extp)) c_rgSaveTypes[1] = c_rgLoadTypes[3], c_rgSaveNums++, defidx = 2;
-    else if (!stricmp("pgm", extp)) c_rgSaveTypes[1] = c_rgLoadTypes[3], c_rgSaveNums++, defidx = 2;
-    else if (!stricmp("pfm", extp)) c_rgSaveTypes[1] = c_rgLoadTypes[3], c_rgSaveNums++, defidx = 2;
-    else if (!stricmp("hdr", extp)) c_rgSaveTypes[1] = c_rgLoadTypes[3], c_rgSaveNums++, defidx = 2;
-    else if (!stricmp("wav", extp)) c_rgSaveTypes[1] = c_rgLoadTypes[11], c_rgSaveNums++, defidx = 2;
-    else                            c_rgSaveTypes[1] = c_rgLoadTypes[16], c_rgSaveNums++, defidx = 2;
+    /**/ if (!stricmp("dds", extp)) c_rgSaveTypes[1] = c_rgLoadTypes[1], c_rgSaveNums++, defidx = 2;
+    else if (!stricmp("png", extp)) c_rgSaveTypes[1] = c_rgLoadTypes[1], c_rgSaveNums++, defidx = 2;
+    else if (!stricmp("tga", extp)) c_rgSaveTypes[1] = c_rgLoadTypes[1], c_rgSaveNums++, defidx = 2;
+    else if (!stricmp("bmp", extp)) c_rgSaveTypes[1] = c_rgLoadTypes[1], c_rgSaveNums++, defidx = 2;
+    else if (!stricmp("ppm", extp)) c_rgSaveTypes[1] = c_rgLoadTypes[1], c_rgSaveNums++, defidx = 2;
+    else if (!stricmp("pgm", extp)) c_rgSaveTypes[1] = c_rgLoadTypes[1], c_rgSaveNums++, defidx = 2;
+    else if (!stricmp("pfm", extp)) c_rgSaveTypes[1] = c_rgLoadTypes[1], c_rgSaveNums++, defidx = 2;
+    else if (!stricmp("hdr", extp)) c_rgSaveTypes[1] = c_rgLoadTypes[1], c_rgSaveNums++, defidx = 2;
+    else                            c_rgSaveTypes[1] = c_rgLoadTypes[10], c_rgSaveNums++, defidx = 2;
 
-    hr = AskOutput();
+    hr = AskOutput(NULL);
     if (SUCCEEDED(hr)) {
       outfile = strdup(selected_string);
 
@@ -688,7 +715,7 @@ HRESULT Repair()
 {
   HRESULT hr;
 
-  hr = AskInput();
+  hr = AskInput(NULL);
   if (SUCCEEDED(hr)) {
     /* look what we'v got
     char *infile, *outfile; */
@@ -699,20 +726,17 @@ HRESULT Repair()
     defext = AnsiToUnicode(extp);
 
 				    c_rgSaveTypes[0] = c_rgLoadTypes[0], c_rgSaveNums = 1, defidx = 1;
-    /**/ if (!stricmp("nif", extp)) c_rgSaveTypes[1] = c_rgLoadTypes[1], c_rgSaveNums++, defidx = 2;
-    else if (!stricmp("kf",  extp)) c_rgSaveTypes[1] = c_rgLoadTypes[2], c_rgSaveNums++, defidx = 2;
-    else if (!stricmp("dds", extp)) c_rgSaveTypes[1] = c_rgLoadTypes[3], c_rgSaveNums++, defidx = 2;
-    else if (!stricmp("png", extp)) c_rgSaveTypes[1] = c_rgLoadTypes[4], c_rgSaveNums++, defidx = 2;
-    else if (!stricmp("tga", extp)) c_rgSaveTypes[1] = c_rgLoadTypes[5], c_rgSaveNums++, defidx = 2;
-    else if (!stricmp("bmp", extp)) c_rgSaveTypes[1] = c_rgLoadTypes[6], c_rgSaveNums++, defidx = 2;
-    else if (!stricmp("ppm", extp)) c_rgSaveTypes[1] = c_rgLoadTypes[7], c_rgSaveNums++, defidx = 2;
-    else if (!stricmp("pgm", extp)) c_rgSaveTypes[1] = c_rgLoadTypes[8], c_rgSaveNums++, defidx = 2;
-    else if (!stricmp("pfm", extp)) c_rgSaveTypes[1] = c_rgLoadTypes[9], c_rgSaveNums++, defidx = 2;
-    else if (!stricmp("hdr", extp)) c_rgSaveTypes[1] = c_rgLoadTypes[10], c_rgSaveNums++, defidx = 2;
-    else if (!stricmp("wav", extp)) c_rgSaveTypes[1] = c_rgLoadTypes[11], c_rgSaveNums++, defidx = 2;
-    else                            c_rgSaveTypes[1] = c_rgLoadTypes[16], c_rgSaveNums++, defidx = 2;
+    /**/ if (!stricmp("dds", extp)) c_rgSaveTypes[1] = c_rgLoadTypes[1], c_rgSaveNums++, defidx = 2;
+    else if (!stricmp("png", extp)) c_rgSaveTypes[1] = c_rgLoadTypes[2], c_rgSaveNums++, defidx = 2;
+    else if (!stricmp("tga", extp)) c_rgSaveTypes[1] = c_rgLoadTypes[3], c_rgSaveNums++, defidx = 2;
+    else if (!stricmp("bmp", extp)) c_rgSaveTypes[1] = c_rgLoadTypes[4], c_rgSaveNums++, defidx = 2;
+    else if (!stricmp("ppm", extp)) c_rgSaveTypes[1] = c_rgLoadTypes[5], c_rgSaveNums++, defidx = 2;
+    else if (!stricmp("pgm", extp)) c_rgSaveTypes[1] = c_rgLoadTypes[6], c_rgSaveNums++, defidx = 2;
+    else if (!stricmp("pfm", extp)) c_rgSaveTypes[1] = c_rgLoadTypes[7], c_rgSaveNums++, defidx = 2;
+    else if (!stricmp("hdr", extp)) c_rgSaveTypes[1] = c_rgLoadTypes[8], c_rgSaveNums++, defidx = 2;
+    else                            c_rgSaveTypes[1] = c_rgLoadTypes[10], c_rgSaveNums++, defidx = 2;
 
-    hr = AskOutput();
+    hr = AskOutput(NULL);
     if (SUCCEEDED(hr)) {
       outfile = strdup(selected_string);
 
@@ -753,7 +777,7 @@ HRESULT Copy()
 {
   HRESULT hr;
 
-  hr = AskInput();
+  hr = AskInput(NULL);
   if (SUCCEEDED(hr)) {
     /* look what we'v got
     char *infile, *outfile; */
@@ -764,20 +788,17 @@ HRESULT Copy()
     defext = AnsiToUnicode(extp);
 
 				    c_rgSaveTypes[0] = c_rgLoadTypes[0], c_rgSaveNums = 1, defidx = 1;
-    /**/ if (!stricmp("nif", extp)) c_rgSaveTypes[1] = c_rgLoadTypes[1], c_rgSaveNums++, defidx = 2;
-    else if (!stricmp("kf",  extp)) c_rgSaveTypes[1] = c_rgLoadTypes[2], c_rgSaveNums++, defidx = 2;
-    else if (!stricmp("dds", extp)) c_rgSaveTypes[1] = c_rgLoadTypes[3], c_rgSaveNums++, defidx = 2;
-    else if (!stricmp("png", extp)) c_rgSaveTypes[1] = c_rgLoadTypes[4], c_rgSaveNums++, defidx = 2;
-    else if (!stricmp("tga", extp)) c_rgSaveTypes[1] = c_rgLoadTypes[5], c_rgSaveNums++, defidx = 2;
-    else if (!stricmp("bmp", extp)) c_rgSaveTypes[1] = c_rgLoadTypes[6], c_rgSaveNums++, defidx = 2;
-    else if (!stricmp("ppm", extp)) c_rgSaveTypes[1] = c_rgLoadTypes[7], c_rgSaveNums++, defidx = 2;
-    else if (!stricmp("pgm", extp)) c_rgSaveTypes[1] = c_rgLoadTypes[8], c_rgSaveNums++, defidx = 2;
-    else if (!stricmp("pfm", extp)) c_rgSaveTypes[1] = c_rgLoadTypes[9], c_rgSaveNums++, defidx = 2;
-    else if (!stricmp("hdr", extp)) c_rgSaveTypes[1] = c_rgLoadTypes[10], c_rgSaveNums++, defidx = 2;
-    else if (!stricmp("wav", extp)) c_rgSaveTypes[1] = c_rgLoadTypes[11], c_rgSaveNums++, defidx = 2;
-    else                            c_rgSaveTypes[1] = c_rgLoadTypes[16], c_rgSaveNums++, defidx = 2;
+    /**/ if (!stricmp("dds", extp)) c_rgSaveTypes[1] = c_rgLoadTypes[1], c_rgSaveNums++, defidx = 2;
+    else if (!stricmp("png", extp)) c_rgSaveTypes[1] = c_rgLoadTypes[2], c_rgSaveNums++, defidx = 2;
+    else if (!stricmp("tga", extp)) c_rgSaveTypes[1] = c_rgLoadTypes[3], c_rgSaveNums++, defidx = 2;
+    else if (!stricmp("bmp", extp)) c_rgSaveTypes[1] = c_rgLoadTypes[4], c_rgSaveNums++, defidx = 2;
+    else if (!stricmp("ppm", extp)) c_rgSaveTypes[1] = c_rgLoadTypes[5], c_rgSaveNums++, defidx = 2;
+    else if (!stricmp("pgm", extp)) c_rgSaveTypes[1] = c_rgLoadTypes[6], c_rgSaveNums++, defidx = 2;
+    else if (!stricmp("pfm", extp)) c_rgSaveTypes[1] = c_rgLoadTypes[7], c_rgSaveNums++, defidx = 2;
+    else if (!stricmp("hdr", extp)) c_rgSaveTypes[1] = c_rgLoadTypes[8], c_rgSaveNums++, defidx = 2;
+    else                            c_rgSaveTypes[1] = c_rgLoadTypes[10], c_rgSaveNums++, defidx = 2;
 
-    hr = AskOutput();
+    hr = AskOutput(NULL);
     if (SUCCEEDED(hr)) {
       outfile = strdup(selected_string);
 

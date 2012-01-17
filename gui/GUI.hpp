@@ -111,6 +111,7 @@ private:
 
   /* ---------------------------------------------------------------------------- */
   void ResetHButtons();
+  void ResetPButtons();
 
   /* ---------------------------------------------------------------------------- */
   void ChangeLeaveHDR(wxCommandEvent& event);
@@ -121,6 +122,11 @@ private:
   void ChangeDoOptimizeImages(wxCommandEvent& event);
 
   /* ---------------------------------------------------------------------------- */
+  void ChangeSkipProcessing(wxCommandEvent& event);
+  void ChangeSkipOptimized(wxCommandEvent& event);
+  void ChangePassthrough(wxCommandEvent& event);
+
+  /* ---------------------------------------------------------------------------- */
   void ChangeSkipExisting(wxCommandEvent& event);
   void ChangeSkipNewer(wxCommandEvent& event);
   void ChangeSkipHidden(wxCommandEvent& event);
@@ -128,6 +134,27 @@ private:
   void ChangeSkipBroken(wxCommandEvent& event);
   void ChangeUnselectExtras(wxCommandEvent& event);
   void ChangeLogFile(wxCommandEvent& event);
+
+  /* ---------------------------------------------------------------------------- */
+  void ChangeCompressMSN(wxCommandEvent& event);
+  void ChangeCompressMSNFormat(wxCommandEvent& event);
+  void ChangeCompressN(wxCommandEvent& event);
+  void ChangeCompressNFormat(wxCommandEvent& event);
+  void ChangeCompressNS(wxCommandEvent& event);
+  void ChangeCompressNSFormat(wxCommandEvent& event);
+  void ChangeCompressC(wxCommandEvent& event);
+  void ChangeCompressCFormat(wxCommandEvent& event);
+  void ChangeCompressCA(wxCommandEvent& event);
+  void ChangeCompressCAFormat(wxCommandEvent& event);
+  void ChangeCompressG(wxCommandEvent& event);
+  void ChangeCompressGFormat(wxCommandEvent& event);
+  void ChangeCompressGA(wxCommandEvent& event);
+  void ChangeCompressGAFormat(wxCommandEvent& event);
+  void ChangeLimitResPlain(wxCommandEvent& event);
+  void ChangeLimitResCompressed(wxCommandEvent& event);
+  void ChangeLimitSzeLand(wxCommandEvent& event);
+  void ChangeLimitSzeChar(wxCommandEvent& event);
+  void ChangeLimitSzeOther(wxCommandEvent& event);
 
   /* ---------------------------------------------------------------------------- */
   void ResetCFileList();
@@ -160,14 +187,18 @@ private:
   void ChangeSelectedPreview(wxCommandEvent& event);
   void ChangeSelectedPreview(wxString ph);
 
+  void ActivateTreeItem(wxTreeEvent& event);
+
   /* ---------------------------------------------------------------------------- */
   void TypedIn(wxCommandEvent& event);
+  void TypedInDone(wxFocusEvent& event);
   void BrowseIn(wxCommandEvent& event);
   void BrowseIn(wxString ph);
 
   /* ---------------------------------------------------------------------------- */
-  void TypedOut(wxCommandEvent& event);
-  void BrowseOut(wxCommandEvent& event);
+  void TypedOut(wxCommandEvent& event); void TypedOutC(wxCommandEvent& event);
+  void TypedOutDone(wxFocusEvent& event); void TypedOutCDone(wxFocusEvent& event);
+  void BrowseOut(wxCommandEvent& event); void BrowseOutC(wxCommandEvent& event);
   void BrowseOut(wxString ph);
 
   /* ---------------------------------------------------------------------------- */
@@ -188,6 +219,7 @@ private:
   wxPGProperty *rHeight;
 
   void ChangePreview(wxCommandEvent& event);
+  void SaveAsStart(wxCommandEvent& event);
 
 public:
   bool RequestFeedback(const char *question);

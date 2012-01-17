@@ -42,7 +42,7 @@ extern "C" {
 
 struct dirent {
   unsigned char d_namlen;
-  char d_name[256];
+  char d_name[260];
 };
 
 /* Definition of DIR requires many other headers; not included here to

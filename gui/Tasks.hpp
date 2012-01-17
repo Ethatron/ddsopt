@@ -10,5 +10,5 @@
 extern LPSTR selected_string;
 
 void SetOutput(const char *against);
-long AskInput();
-long AskOutput();
+long AskInput(const char *presel);
+long AskOutput(const char *presel);

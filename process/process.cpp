@@ -103,7 +103,7 @@ void process(const char *inname, const char *ouname) {
 	}
       }
 
-      if ((oinfo.io_type & IO_DIRECTORY) || simulation) {
+      if (simulation || (oinfo.io_type & IO_DIRECTORY)) {
 	struct iodir *dir;
 
 	if ((dir = ioopendir(inname))) {
